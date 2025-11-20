@@ -1,8 +1,19 @@
 {
   "version": 2,
-  "functions": {
-    "api/vk.js": {
-      "maxDuration": 30
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/main.py"
+    }
+  ]
 }
