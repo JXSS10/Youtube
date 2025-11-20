@@ -1,9 +1,8 @@
 {
-  "name": "videodownloader",
+  "name": "vk-downloader",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "ytdl-core": "^4.11.0",
     "node-fetch": "^3.3.2"
   }
 }
