@@ -8,28 +8,45 @@ export default async function handler(req, res) {
   }
 
   try {
-    // جلب HTML الصفحة
-    const page = await fetch(videoUrl);
+    // Force desktop mode — لأن m.vk.com لا يحتوي روابط الفيديو
+    const cleanURL = videoUrl.replace("m.vk.com", "vk.com");
+
+    const page = await fetch(cleanURL, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+      }
+    });
+
     const html = await page.text();
 
-    // البحث عن روابط الفيديو داخل الـ JSON
-    const matches = [...html.matchAll(/"url_\d+":\s*"([^"]+)"/g)];
+    // 1️⃣ محاولة استخراج الروابط من JSON (Desktop)
+    let matches = [...html.matchAll(/"url(\d+)":"([^"]+)"/g)];
 
-    if (!matches.length) {
-      return res.status(400).json({ error: "No video links found" });
+    if (matches.length === 0) {
+      // 2️⃣ محاولة ثانية للبحث عن صيغة أخرى
+      matches = [...html.matchAll(/"url_(\d+)":"([^"]+)"/g)];
     }
 
-    // اختيار أعلى جودة متاحة
+    if (matches.length === 0) {
+      // 3️⃣ محاولة ثالثة: روابط player_inline
+      matches = [...html.matchAll(/"cache(\d+)":"([^"]+)"/g)];
+    }
+
+    if (matches.length === 0) {
+      return res.status(400).json({ error: "Video links not found (VK changed layout)" });
+    }
+
+    // ترتيب أجود فيديو
     const videos = matches.map(m => ({
-      quality: parseInt(m[0].match(/url_(\d+)/)[1]),
-      url: m[1]
+      quality: parseInt(m[1]),
+      url: m[2].replace(/\\/g, "") // إزالة backslashes
     }));
 
     videos.sort((a, b) => b.quality - a.quality);
 
     const best = videos[0];
 
-    // Header التحميل
+    // إرسال الفيديو مباشرة
     res.setHeader("Content-Type", "video/mp4");
     res.setHeader(
       "Content-Disposition",
