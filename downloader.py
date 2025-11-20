@@ -1,44 +1,34 @@
 import os
-import re
-import threading
-from yt_dlp import YoutubeDL
+import asyncio
+import aiohttp
 
-TEMP_DIR = "/tmp"  # المسار المسموح في Railway
+# مجلد مؤقت للملفات
+TEMP_DIR = "/tmp"
 
-def safe_filename(title):
-    # إزالة الأحرف الغير آمنة
-    title = re.sub(r'[^\w\-_. ]', '', title)
-    title = title.strip()
-    if len(title) > 100:
-        title = title[:100]
-    return title + ".mp4"
+async def download_video(url: str) -> str:
+    """
+    تحميل الفيديو من رابط وحفظه في TEMP_DIR
+    """
+    filename = url.split("/")[-1]  # اسم الملف من الرابط
+    filepath = os.path.join(TEMP_DIR, filename)
 
-def delete_file_later(path, delay=240):
-    def _delete():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                content = await resp.read()
+                with open(filepath, "wb") as f:
+                    f.write(content)
+                return filepath
+            else:
+                raise Exception(f"Failed to download video. Status code: {resp.status}")
+
+async def clear_temp_files():
+    """
+    مسح كل الملفات في TEMP_DIR
+    """
+    for filename in os.listdir(TEMP_DIR):
+        path = os.path.join(TEMP_DIR, filename)
         try:
-            threading.Event().wait(delay)
-            if os.path.exists(path):
-                os.remove(path)
+            os.remove(path)
         except Exception:
             pass
-    threading.Thread(target=_delete).start()
-
-def download_video(url):
-    # استخراج info للحصول على العنوان
-    with YoutubeDL({}) as ydl:
-        info = ydl.extract_info(url, download=False)
-        title = info.get("title", "video")
-
-    filename = os.path.join(TEMP_DIR, safe_filename(title))
-
-    ydl_opts = {
-        "outtmpl": filename,
-        "quiet": True,
-        "no_warnings": True
-    }
-
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
-    delete_file_later(filename)  # مسح بعد 4 دقائق
-    return filename
