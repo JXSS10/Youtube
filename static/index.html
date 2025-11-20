@@ -1,109 +1,46 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Universal Video Downloader</title>
-
 <style>
-body {
-    background: #0d0d0d;
-    font-family: sans-serif;
-    color: white;
-    text-align: center;
-    padding: 40px;
-}
-.container {
-    max-width: 420px;
-    margin: auto;
-}
-input, button {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    margin-top: 10px;
-    font-size: 16px;
-    border: none;
-}
-input {
-    background: #1b1b1b;
-    color: #fff;
-}
-button {
-    background: #0070f3;
-    color: #fff;
-    font-weight: bold;
-}
-.card {
-    background: #1a1a1a;
-    padding: 18px;
-    border-radius: 14px;
-    text-align: left;
-    margin-top: 20px;
-}
-a {
-    color: #4daaff;
-}
-.thumb {
-    width: 100%;
-    border-radius: 12px;
-    margin-top: 10px;
-}
+body { background: radial-gradient(circle at top, #0d0d0d, #000); color:white; font-family:sans-serif; text-align:center; padding:40px;}
+.container { max-width: 420px; margin:auto;}
+input, button { width:100%; padding:14px; margin-top:10px; border-radius:12px; border:none; font-size:16px;}
+input { background:#1b1b1b; color:#fff;}
+button { background: linear-gradient(90deg,#e0b056,#f5d38f); color:#000; font-weight:bold; cursor:pointer;}
+.card { background:#1a1a1a; padding:18px; border-radius:14px; margin-top:20px; text-align:left;}
+a { color:#4daaff;}
+.thumb { width:100%; border-radius:12px; margin-top:10px;}
 </style>
-
 </head>
-
 <body>
 <div class="container">
     <h1>🎥 Universal Video Downloader</h1>
-
-    <input id="url" placeholder="ضع رابط YouTube / VK / أي موقع يدعمه yt-dlp" />
-
+    <input id="url" placeholder="ضع رابط VK/YouTube/أي منصة هنا">
     <button onclick="process()">استخراج الروابط</button>
-
     <div id="result"></div>
 </div>
-
 <script>
 async function process() {
     const url = document.getElementById("url").value.trim();
-    if (!url) return alert("ضع رابط أولاً");
-
-    document.getElementById("result").innerHTML = "<p>⏳ جاري التحميل...</p>";
-
-    let endpoint = url.includes("vk.com") ? "/api/vk" : "/api/ytdlp";
-
-    const res = await fetch(`${endpoint}?url=${encodeURIComponent(url)}`);
+    if(!url) return alert("ضع الرابط أولاً");
+    document.getElementById("result").innerHTML = "<p>⏳ جاري المعالجة...</p>";
+    const res = await fetch(`/api/download?url=${encodeURIComponent(url)}`);
     const data = await res.json();
-
-    if (data.error) {
+    if(data.error){
         document.getElementById("result").innerHTML = `<p>❌ ${data.error}</p>`;
         return;
     }
-
-    let html = `<div class='card'><h3>الروابط المتاحة:</h3>`;
-
-    // yt-dlp
-    if (data.data) {
-        if (data.data.thumbnail)
-            html += `<img src="${data.data.thumbnail}" class="thumb" />`;
-
-        Object.entries(data.data.formats).forEach(([q, link]) => {
-            html += `<p>${q}: <a href="${link}" target="_blank">تحميل</a></p>`;
-        });
-    }
-
-    // VK
-    if (data.links) {
-        Object.entries(data.links).forEach(([q, link]) => {
-            html += `<p>${q}: <a href="${link}" target="_blank">تحميل</a></p>`;
-        });
-    }
-
+    let html = `<div class='card'><h3>روابط التحميل:</h3>`;
+    if(data.data.thumbnail) html += `<img src="${data.data.thumbnail}" class="thumb">`;
+    Object.entries(data.data.formats).forEach(([q, link])=>{
+        html += `<p>${q}: <a href="${link}" target="_blank">تحميل</a></p>`;
+    });
     html += `</div>`;
     document.getElementById("result").innerHTML = html;
 }
 </script>
-
 </body>
 </html>
