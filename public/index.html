@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>موقع تحميل الفيديوهات</title>
+  <style>
+    body { font-family: Arial; text-align:center; margin-top:50px; }
+    input { padding:10px; width:300px; }
+    button { padding:10px 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>🎥 تحميل الفيديوهات</h1>
+
+  <input id="url" placeholder="ضع رابط الفيديو هنا">
+  <button onclick="go()">تنزيل</button>
+
+  <p id="msg"></p>
+
+  <script>
+    async function go() {
+      const url = document.getElementById("url").value;
+      document.getElementById("msg").innerText = "جاري المعالجة...";
+      const res = await fetch(`/api/router?url=${encodeURIComponent(url)}`);
+
+      if (res.ok) {
+        window.location = `/api/router?url=${encodeURIComponent(url)}`;
+      } else {
+        document.getElementById("msg").innerText = "خطأ في الرابط!";
+      }
+    }
+  </script>
+
+</body>
+</html>
