@@ -1,8 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "memory": 1024,
+    "api/vk.js": {
       "maxDuration": 30
     }
   }
