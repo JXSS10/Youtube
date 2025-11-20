@@ -1,24 +1,22 @@
-import yt_dlp
+from yt_dlp import YoutubeDL
 
-def ytdlp_download(url: str):
+def extract_video(url: str):
     """
     Extract video info & formats using yt-dlp
     """
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
-        "extract_flat": False,
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
-    # extract formats
     formats = {}
     for f in info.get("formats", []):
-        if f.get("filesize") and f.get("url"):
-            quality = f"{f.get('height', 'Unknown')}p"
-            formats[quality] = f["url"]
+        if f.get("url"):
+            q = f.get("height") or f.get("resolution") or "unknown"
+            formats[f"{q}p"] = f["url"]
 
     return {
         "title": info.get("title"),
