@@ -1,21 +1,41 @@
-from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse, JSONResponse
-from downloader import extract_video
+from fastapi import FastAPI, Form
+from fastapi.responses import FileResponse, HTMLResponse
+from downloader import download_video, clear_temp_files
+import asyncio
+import os
 
 app = FastAPI()
 
-# واجهة الموقع
-@app.get("/")
-async def home():
-    return FileResponse("static/index.html")
+# تنظيف temp كل 4 دقائق
+async def periodic_cleanup():
+    while True:
+        await asyncio.sleep(240)  # 4 دقائق
+        await clear_temp_files()
 
-# API عام لأي رابط yt-dlp (YouTube / VK / وغيرها)
-@app.get("/api/download")
-async def download(url: str = Query(...)):
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(periodic_cleanup())
+
+# واجهة الموقع
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    with open("static/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+# API لبدء التحميل
+@app.post("/api/download")
+async def api_download(url: str = Form(...)):
     try:
-        data = extract_video(url)
-        if not data["formats"]:
-            return JSONResponse({"error": "No downloadable links found"}, status_code=404)
-        return {"status": "ok", "data": data}
+        filepath = await download_video(url)
+        filename = os.path.basename(filepath)
+        return {"status": "ok", "download_url": f"/temp/{filename}"}
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return {"status": "error", "message": str(e)}
+
+# تقديم ملفات temp
+@app.get("/temp/{filename}")
+async def get_temp_file(filename: str):
+    path = os.path.join("temp", filename)
+    if os.path.exists(path):
+        return FileResponse(path, media_type="video/mp4", filename=filename)
+    return {"status": "error", "message": "File not found"}
