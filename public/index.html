@@ -1,36 +1,88 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>موقع تحميل الفيديوهات</title>
-  <style>
-    body { font-family: Arial; text-align:center; margin-top:50px; }
-    input { padding:10px; width:300px; }
-    button { padding:10px 20px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎥 تحميل فيديوهات VK</title>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at top, #0d0d0d, #000);
+            min-height: 100vh;
+        }
+        .glass {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gold-btn {
+            background: linear-gradient(90deg, #e0b056, #f5d38f);
+            color: #000;
+        }
+    </style>
+
 </head>
-<body>
+<body class="text-white flex items-center justify-center p-6">
 
-  <h1>🎥 تحميل الفيديوهات</h1>
+    <div class="glass rounded-3xl shadow-2xl p-8 w-full max-w-md animate-fadeIn">
+        
+        <h1 class="text-3xl font-bold text-center mb-6">
+            🎥 تحميل فيديوهات <span class="text-yellow-400">VK</span>
+        </h1>
 
-  <input id="url" placeholder="ضع رابط الفيديو هنا">
-  <button onclick="go()">تنزيل</button>
+        <p class="text-gray-300 text-center mb-6">
+            ضع رابط الفيديو من VK وسيتم استخراج أعلى جودة وتنزيلها مباشرة.
+        </p>
 
-  <p id="msg"></p>
+        <div class="flex flex-col gap-4">
+            
+            <input id="url" 
+                   class="w-full p-4 rounded-xl bg-black/40 border border-gray-700 text-white focus:border-yellow-400 outline-none"
+                   placeholder="ضع رابط الفيديو هنا">
 
-  <script>
-    async function go() {
-      const url = document.getElementById("url").value;
-      document.getElementById("msg").innerText = "جاري المعالجة...";
-      const res = await fetch(`/api/router?url=${encodeURIComponent(url)}`);
+            <button onclick="downloadVideo()"
+                    class="gold-btn p-4 rounded-xl font-bold text-lg shadow-md hover:scale-105 transition">
+                ⬇️ تحميل الآن
+            </button>
 
-      if (res.ok) {
-        window.location = `/api/router?url=${encodeURIComponent(url)}`;
-      } else {
-        document.getElementById("msg").innerText = "خطأ في الرابط!";
-      }
+        </div>
+
+        <p id="msg" class="text-center text-yellow-300 mt-5"></p>
+
+        <footer class="text-center mt-10 text-sm text-gray-500">
+            تصميم فخم • متجاوب مع Android • سرعة عالية ⚡
+        </footer>
+    </div>
+
+
+
+<script>
+    async function downloadVideo() {
+        const url = document.getElementById("url").value;
+        const msg = document.getElementById("msg");
+
+        if (!url.trim()) {
+            msg.innerText = "❗ برجاء إدخال الرابط";
+            return;
+        }
+
+        msg.innerText = "⏳ جاري جلب الرابط...";
+
+        const res = await fetch(`/api/vk?url=${encodeURIComponent(url)}`);
+
+        if (!res.ok) {
+            msg.innerText = "❌ الرابط غير صالح أو الفيديو غير موجود.";
+            return;
+        }
+
+        msg.innerText = "✔ جاري بدء التحميل...";
+        window.location = `/api/vk?url=${encodeURIComponent(url)}`;
     }
-  </script>
+</script>
+
 
 </body>
 </html>
