@@ -39,3 +39,8 @@ async def get_temp_file(filename: str):
     if os.path.exists(path):
         return FileResponse(path, media_type="video/mp4", filename=filename)
     return {"status": "error", "message": "File not found"}
+import os
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
