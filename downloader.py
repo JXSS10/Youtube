@@ -1,34 +1,36 @@
 import os
-import asyncio
 import aiohttp
+import asyncio
+from pathlib import Path
 
-# مجلد مؤقت للملفات
-TEMP_DIR = "/tmp"
+# تأكد أن مجلد temp موجود
+Path("temp").mkdir(parents=True, exist_ok=True)
 
 async def download_video(url: str) -> str:
     """
-    تحميل الفيديو من رابط وحفظه في TEMP_DIR
+    تحمل الفيديو من رابط URL وتحفظه في مجلد temp
     """
-    filename = url.split("/")[-1]  # اسم الملف من الرابط
-    filepath = os.path.join(TEMP_DIR, filename)
+    filename = f"{hash(url)}.mp4"  # اسم فريد لكل رابط
+    filepath = os.path.join("temp", filename)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
-            if resp.status == 200:
-                content = await resp.read()
-                with open(filepath, "wb") as f:
-                    f.write(content)
-                return filepath
-            else:
-                raise Exception(f"Failed to download video. Status code: {resp.status}")
+            if resp.status != 200:
+                raise Exception(f"Failed to download, status {resp.status}")
+            data = await resp.read()
+            with open(filepath, "wb") as f:
+                f.write(data)
+
+    return filepath
 
 async def clear_temp_files():
     """
-    مسح كل الملفات في TEMP_DIR
+    تنظيف ملفات temp الأقدم من ساعة واحدة
     """
-    for filename in os.listdir(TEMP_DIR):
-        path = os.path.join(TEMP_DIR, filename)
-        try:
-            os.remove(path)
-        except Exception:
-            pass
+    now = asyncio.get_event_loop().time()
+    for file in os.listdir("temp"):
+        path = os.path.join("temp", file)
+        if os.path.isfile(path):
+            # حذف الملفات الأكبر من 3600 ثانية (ساعة)
+            if now - os.path.getmtime(path) > 3600:
+                os.remove(path)
