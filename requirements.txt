@@ -3,3 +3,8 @@ uvicorn
 yt-dlp
 requests
 beautifulsoup4
+fastapi
+uvicorn
+yt-dlp
+aiofiles
+python-multipart
