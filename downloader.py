@@ -1,26 +1,44 @@
 import os
+import re
+import threading
 from yt_dlp import YoutubeDL
-import asyncio
 
-TEMP_DIR = "/tmp"
-os.makedirs(TEMP_DIR, exist_ok=True)  # safe on Vercel
+TEMP_DIR = "/tmp"  # المسار المسموح في Railway
 
-async def download_video(url: str) -> str:
-    ydl_opts = {
-        "outtmpl": os.path.join(TEMP_DIR, "%(title)s.%(ext)s"),
-        "quiet": True,
-    }
-    loop = asyncio.get_event_loop()
-    def run_yt():
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-        return os.path.join(TEMP_DIR, f"{info['title']}.{info['ext']}")
-    filepath = await loop.run_in_executor(None, run_yt)
-    return filepath
+def safe_filename(title):
+    # إزالة الأحرف الغير آمنة
+    title = re.sub(r'[^\w\-_. ]', '', title)
+    title = title.strip()
+    if len(title) > 100:
+        title = title[:100]
+    return title + ".mp4"
 
-async def clear_temp_files():
-    for f in os.listdir(TEMP_DIR):
+def delete_file_later(path, delay=240):
+    def _delete():
         try:
-            os.remove(os.path.join(TEMP_DIR, f))
-        except:
+            threading.Event().wait(delay)
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
             pass
+    threading.Thread(target=_delete).start()
+
+def download_video(url):
+    # استخراج info للحصول على العنوان
+    with YoutubeDL({}) as ydl:
+        info = ydl.extract_info(url, download=False)
+        title = info.get("title", "video")
+
+    filename = os.path.join(TEMP_DIR, safe_filename(title))
+
+    ydl_opts = {
+        "outtmpl": filename,
+        "quiet": True,
+        "no_warnings": True
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    delete_file_later(filename)  # مسح بعد 4 دقائق
+    return filename
