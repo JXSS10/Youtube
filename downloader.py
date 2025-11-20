@@ -23,9 +23,7 @@ async def download_video(url: str) -> str:
     return filepath
 
 async def clear_temp_files():
-    """
-    Delete all files in TEMP_DIR
-    """
+    """Delete all files in TEMP_DIR"""
     for f in os.listdir(TEMP_DIR):
         try:
             os.remove(os.path.join(TEMP_DIR, f))
